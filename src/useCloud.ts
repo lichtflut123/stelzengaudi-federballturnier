@@ -80,10 +80,15 @@ export function useCloud({ tournament, contentRevision, adoptRemote, enabled }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
-  // Eigene Änderungen hochladen – mit Versionsprüfung.
+  // Eigene Änderungen hochladen – mit Versionsprüfung. Im Zustand „netz"
+  // stößt dieser Effekt nichts an: sonst liefe nach jedem Fehlschlag sofort
+  // der nächste Versuch (der Fehlschlag ändert den Zustand, der Zustand
+  // triggert den Effekt – eine enge Schleife, die den Dienst hämmert).
+  // Den erneuten Versuch übernehmen der 5-Sekunden-Zähler unten und der
+  // Knopf „Jetzt versuchen".
   useEffect(() => {
     const cfg = config.current;
-    if (!cfg || state === 'aus' || state === 'verbinde') return;
+    if (!cfg || state === 'aus' || state === 'verbinde' || state === 'netz') return;
     if (contentRevision === synced.current || busy.current) return;
     busy.current = true;
     setState('laeuft');

@@ -125,7 +125,13 @@ check(
 check(store.row.rev === revBefore + 1, 'der fremde Stand wurde nicht überschrieben');
 
 // --- Netzausfall wird gemeldet ----------------------------------------------
-await b.context().route('https://fake.supabase.co/**', (route) => route.abort());
+// Dabei zählen wir mit: Die App darf im Ausfall nicht in einer engen Schleife
+// auf den Dienst hämmern, sondern wartet zwischen den Versuchen.
+let abgebrochen = 0;
+await b.context().route('https://fake.supabase.co/**', (route) => {
+  abgebrochen += 1;
+  return route.abort();
+});
 await b.locator('.match button:has-text("Ergebnis eintragen")').first().click();
 const cardB = b.locator('.match').filter({ has: b.locator('button:has-text("Speichern")') }).first();
 const chipB = await cardB.locator('.chip', { hasText: /^bis / }).innerText();
@@ -137,10 +143,14 @@ if ((await cardB.locator('.set-row').count()) > 1) {
   await cardB.locator('.set-row input').nth(3).fill(String(zielB - 4));
 }
 await cardB.locator('button:has-text("Speichern")').click();
-await b.waitForTimeout(1000);
+await b.waitForTimeout(2000);
 check(
   (await b.locator('.note--warn', { hasText: 'keine Verbindung' }).count()) === 1,
   'Netzausfall wird ehrlich gemeldet',
+);
+check(
+  abgebrochen <= 5,
+  `im Ausfall wird gewartet statt gehämmert (${abgebrochen} Anfragen in 2 s)`,
 );
 
 await browser.close();
