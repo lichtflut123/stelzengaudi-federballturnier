@@ -20,6 +20,9 @@ const check = (ok, label) => {
 
 const browser = await chromium.launch(CHROME ? { executablePath: CHROME } : {});
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+// Die Suite prüft die App im lokalen Betrieb: eine echte sync-config.json im
+// gebauten Stand darf hier keine Netzverbindungen auslösen.
+await page.route('**/sync-config.json*', (route) => route.fulfill({ json: {} }));
 const consoleErrors = [];
 page.on('console', (m) => {
   if (m.type() === 'error') consoleErrors.push(m.text());

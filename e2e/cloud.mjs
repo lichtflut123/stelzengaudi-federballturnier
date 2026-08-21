@@ -186,8 +186,11 @@ check(
     (await page.locator('.note--warn', { hasText: 'keine Verbindung' }).count()) === 1,
     'gescheiterter Verbindungsaufbau wird gemeldet',
   );
-  tot = false; // das Netz kommt zurück
-  await page.waitForTimeout(7000); // ein Wiederhol-Zyklus (5 s) plus Luft
+  // Der erste Wiederhol-Zyklus (nach 5 s) scheitert noch – erst danach kommt
+  // das Netz zurück. Auch dann muss weiter versucht werden.
+  await page.waitForTimeout(6000);
+  tot = false;
+  await page.waitForTimeout(7000); // der nächste Wiederhol-Zyklus plus Luft
   check(meinStore.row !== null, 'nach Netz-Rückkehr wird wirklich verbunden (Zeile angelegt)');
   check(
     meinStore.row !== null &&
@@ -255,23 +258,31 @@ check(
   }
   check(meinStore.row !== null, 'fremder Stand liegt bereit (Vorbereitung)');
   const revVorher = meinStore.row.rev;
-  // Zweites Gerät verbindet langsam – der erste Abruf braucht 1,5 Sekunden.
-  let bremse = true;
-  const { context, page } = await openDevice(
-    browser,
-    async (route) => {
-      if (bremse && route.request().method() === 'GET') {
-        bremse = false;
-        await new Promise((r) => setTimeout(r, 1500));
-      }
-      return backend(route);
-    },
-    { wait: 'domcontentloaded' },
-  );
+  // Zweites Gerät verbindet langsam: der erste Abruf hängt an einem Tor und
+  // wird erst freigegeben, wenn die Eingabe sicher passiert ist – so hängt
+  // die Prüfung nicht an der Geschwindigkeit der Maschine.
+  let freigeben;
+  const tor = new Promise((r) => (freigeben = r));
+  let bremse = false; // erst nach dem Grundaufbau scharf – openDevice lädt zweimal
+  const { context, page } = await openDevice(browser, async (route) => {
+    if (bremse && route.request().method() === 'GET') {
+      bremse = false;
+      await tor;
+    }
+    return backend(route);
+  });
+  bremse = true;
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.setItem('stelzengaudi:splash', '1');
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
   // Während „Verbinde …" trägt die Person schon einen Namen ein.
   await page.fill('input[placeholder="z. B. Anna"]', 'Zoe');
   await page.click('button:has-text("Hinzufügen")');
-  await page.waitForTimeout(2500); // Verbindung steht, fremder Stand übernommen
+  await page.locator('.player-row', { hasText: 'Zoe' }).waitFor();
+  freigeben(); // jetzt darf der Verbindungsaufbau fertig werden
+  await page.waitForTimeout(1500); // fremder Stand übernommen
   check(
     (await page.locator('.note--warn', { hasText: 'Jemand war gleichzeitig dran' }).count()) === 1,
     'Ersetzen der eigenen Eingabe beim Verbinden wird angezeigt statt verschwiegen',

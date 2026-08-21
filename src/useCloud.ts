@@ -39,6 +39,13 @@ export function useCloud({ tournament, contentRevision, adoptRemote, enabled }: 
   retry: () => void;
 } {
   const [state, setState] = useState<CloudState>(enabled ? 'verbinde' : 'aus');
+  /**
+   * Zählt jeden Eintritt in „netz" mit. Nötig, weil setState('netz') auf
+   * bereits „netz" für React keine Änderung ist – ohne den Zähler würde der
+   * 5-Sekunden-Effekt nach einem erneut gescheiterten Versuch nie wieder
+   * scharf gestellt und die Wiederholung bliebe stehen.
+   */
+  const [netzTick, setNetzTick] = useState(0);
   const config = useRef<SyncConfig | null>(null);
   /** Version des Dienstes, auf der der lokale Stand aufbaut. */
   const rev = useRef(0);
@@ -47,6 +54,10 @@ export function useCloud({ tournament, contentRevision, adoptRemote, enabled }: 
   const busy = useRef(false);
   const current = useRef(tournament);
   current.current = tournament;
+  const toNetz = (): void => {
+    setNetzTick((t) => t + 1);
+    setState('netz');
+  };
   /** Aktuelle Inhaltszählung – für Abschlüsse asynchroner Abläufe. */
   const content = useRef(contentRevision);
   content.current = contentRevision;
@@ -79,7 +90,7 @@ export function useCloud({ tournament, contentRevision, adoptRemote, enabled }: 
       const remote = await ensureRow(config.current, current.current);
       if (!alive.current) return;
       if (!remote) {
-        setState('netz');
+        toNetz();
         return;
       }
       rev.current = remote.rev;
@@ -149,7 +160,7 @@ export function useCloud({ tournament, contentRevision, adoptRemote, enabled }: 
           // behandeln. Der nächste Versuch läuft über den Verbindungsaufbau
           // und legt die Zeile notfalls neu an – mit dem lokalen Stand.
           connected.current = false;
-          setState('netz');
+          toNetz();
           return;
         }
         // Jemand anderes war schneller: dessen Stand gilt, die eigene
@@ -161,7 +172,7 @@ export function useCloud({ tournament, contentRevision, adoptRemote, enabled }: 
         setTimeout(() => setState((s) => (s === 'ueberholt' ? 'ok' : s)), 6000);
         return;
       }
-      setState('netz');
+      toNetz();
     });
   }, [contentRevision, state, adoptRemote]);
 
@@ -171,7 +182,7 @@ export function useCloud({ tournament, contentRevision, adoptRemote, enabled }: 
     const timer = setTimeout(reattempt, 5000);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state]);
+  }, [state, netzTick]);
 
   // Regelmäßig nach fremden Änderungen sehen.
   useEffect(() => {
