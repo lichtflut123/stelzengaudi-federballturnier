@@ -20,6 +20,9 @@ const check = (ok, label) => {
 
 const browser = await chromium.launch(CHROME ? { executablePath: CHROME } : {});
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+// Die Suite prüft die App im lokalen Betrieb: eine echte sync-config.json im
+// gebauten Stand darf hier keine Netzverbindungen auslösen.
+await page.route('**/sync-config.json*', (route) => route.fulfill({ json: {} }));
 const consoleErrors = [];
 page.on('console', (m) => {
   if (m.type() === 'error') consoleErrors.push(m.text());
@@ -124,6 +127,18 @@ await page.locator('button:has-text("Punkt zurück")').click();
 for (let i = 0; i < 12; i++) await padA.click();
 // Satzende: Zwischenstand sichtbar, Anzeige „Sätze 1:0“
 check(/Sätze 1:0/.test(await page.locator('.referee__sets').innerText()), 'Satz 1 gewertet (12:3)');
+// Satz zurückholen: „Punkt zurück" muss den satzbeendenden Punkt (des
+// Gewinners) abbauen, nicht dem Verlierer einen Punkt nehmen.
+await page.locator('button:has-text("Satz 1 zurückholen")').click();
+const score = async (pad) => Number(await pad.locator('.referee__score').innerText());
+check((await score(padA)) === 12 && (await score(padB)) === 3, 'zurückgeholter Satz zeigt 12:3');
+await page.locator('button:has-text("Punkt zurück")').click();
+check(
+  (await score(padA)) === 11 && (await score(padB)) === 3,
+  'Punkt zurück nach Satz-Rückholung nimmt dem Satzgewinner den Punkt (11:3)',
+);
+await padA.click(); // Satz wieder beenden (12:3), dann weiter wie gehabt
+check(/Sätze 1:0/.test(await page.locator('.referee__sets').innerText()), 'Satz 1 erneut gewertet (12:3)');
 // Satz 2: 12:0 -> Spiel fertig, Schiri-Ansicht bleibt zu schließen? Nein: onFinished schließt.
 for (let i = 0; i < 12; i++) await padA.click();
 await page.waitForTimeout(200);

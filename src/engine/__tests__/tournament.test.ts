@@ -177,6 +177,33 @@ describe('performDraw', () => {
     }
   });
 
+  it('lässt auch mit Trostrunde und Spiel um Platz 3 niemanden zwei Spiele gleichzeitig bestreiten', () => {
+    // Bei 4-7 Personen speisen die Halbfinal-Verlierer sowohl das Spiel um
+    // Platz 3 als auch die Trostrunde - mit 3 Feldern dürfen diese Spiele
+    // deshalb nicht im selben Zeitfenster liegen. Durchgespielt geprüft,
+    // weil die Besetzung späterer Runden erst mit den Ergebnissen feststeht.
+    for (let n = 4; n <= 8; n++) {
+      for (let seed = 0; seed < 10; seed++) {
+        const t = playAll(
+          performDraw(
+            withPlayers(NAMES.slice(0, n), [], { consolation: true, thirdPlaceMatch: true, courts: 3 }),
+            seed,
+          ),
+        );
+        const perSlot = new Map<number, Set<Id>>();
+        for (const m of t.matches) {
+          const set = perSlot.get(m.slot) ?? new Set<Id>();
+          for (const id of [m.a.playerId, m.b.playerId]) {
+            if (!id) continue;
+            expect(set.has(id), `Person doppelt in Zeitfenster ${m.slot} (n=${n}, Los ${seed})`).toBe(false);
+            set.add(id);
+          }
+          perSlot.set(m.slot, set);
+        }
+      }
+    }
+  });
+
   it('setzt Vorrundenspiele vor die Hauptrunde', () => {
     const t = performDraw(withPlayers(NAMES.slice(0, 11)), 5);
     const playIn = t.matches.filter((m) => m.phase === 'vorrunde');

@@ -1,4 +1,4 @@
 {
-  "_hinweis": "Gemeinsamer Live-Stand: hier die Werte aus dem Supabase-Projekt eintragen (Settings -> API). Bleibt die Datei leer, laeuft die App rein lokal.",
-  "_beispiel": { "url": "https://xyzxyzxyz.supabase.co", "anonKey": "eyJ..." }
+  "url": "https://botklinpoyroveujnkqo.supabase.co",
+  "anonKey": "sb_publishable_cfqW1U1eL25kFeSIbrja2w_KPq0Dnt-"
 }
