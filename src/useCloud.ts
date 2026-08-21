@@ -47,35 +47,77 @@ export function useCloud({ tournament, contentRevision, adoptRemote, enabled }: 
   const busy = useRef(false);
   const current = useRef(tournament);
   current.current = tournament;
+  /** Aktuelle Inhaltszählung – für Abschlüsse asynchroner Abläufe. */
+  const content = useRef(contentRevision);
+  content.current = contentRevision;
+  /** Steht die Verbindung (Zeile gelesen oder angelegt)? */
+  const connected = useRef(false);
+  const connecting = useRef(false);
+  const alive = useRef(true);
 
-  // Verbindung aufbauen: Konfiguration laden, Zeile anlegen, Stand übernehmen.
-  useEffect(() => {
-    if (!enabled) {
-      setState('aus');
-      return;
-    }
-    let active = true;
-    void (async () => {
-      const cfg = await loadSyncConfig();
-      if (!active) return;
-      if (!cfg) {
-        setState('aus');
-        return;
+  /**
+   * Verbindungsaufbau: Konfiguration laden, Zeile lesen oder anlegen, Stand
+   * übernehmen. Läuft nicht nur beim Start, sondern nach jedem Fehlschlag
+   * erneut (5-Sekunden-Zähler, Knopf „Jetzt versuchen") – sonst bliebe die
+   * App für immer unverbunden und das Live-Banner wäre gelogen. Ersetzt der
+   * fremde Stand dabei lokale Eingaben, wird das über „ueberholt" angezeigt,
+   * nicht verschwiegen.
+   */
+  const connect = async (): Promise<void> => {
+    if (connecting.current) return;
+    connecting.current = true;
+    try {
+      if (!config.current) {
+        const cfg = await loadSyncConfig();
+        if (!alive.current) return;
+        if (!cfg) {
+          setState('aus');
+          return;
+        }
+        config.current = cfg;
       }
-      config.current = cfg;
-      const remote = await ensureRow(cfg, current.current);
-      if (!active) return;
+      const remote = await ensureRow(config.current, current.current);
+      if (!alive.current) return;
       if (!remote) {
         setState('netz');
         return;
       }
       rev.current = remote.rev;
-      synced.current = contentRevision;
+      const replaced =
+        content.current !== synced.current &&
+        JSON.stringify(remote.tournament) !== JSON.stringify(current.current);
+      synced.current = content.current;
+      connected.current = true;
       adoptRemote(remote.tournament);
-      setState('ok');
-    })();
+      if (replaced) {
+        setState('ueberholt');
+        setTimeout(() => setState((s) => (s === 'ueberholt' ? 'ok' : s)), 6000);
+      } else {
+        setState('ok');
+      }
+    } finally {
+      connecting.current = false;
+    }
+  };
+
+  /** Nächster Versuch nach „netz": erst verbinden, dann wieder hochladen. */
+  const reattempt = (): void => {
+    if (!connected.current) {
+      void connect();
+      return;
+    }
+    setState('ok'); // stößt den Upload-Effekt wieder an
+  };
+
+  useEffect(() => {
+    if (!enabled) {
+      setState('aus');
+      return;
+    }
+    alive.current = true;
+    void connect();
     return () => {
-      active = false;
+      alive.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
@@ -102,13 +144,19 @@ export function useCloud({ tournament, contentRevision, adoptRemote, enabled }: 
         return;
       }
       if (result.reason === 'konflikt') {
+        if (!result.remote) {
+          // Die Zeile ist weg oder nicht lesbar: wie ein Netzproblem
+          // behandeln. Der nächste Versuch läuft über den Verbindungsaufbau
+          // und legt die Zeile notfalls neu an – mit dem lokalen Stand.
+          connected.current = false;
+          setState('netz');
+          return;
+        }
         // Jemand anderes war schneller: dessen Stand gilt, die eigene
         // Eingabe muss noch einmal gemacht werden – aber sichtbar, nicht still.
-        if (result.remote) {
-          rev.current = result.remote.rev;
-          synced.current = goal;
-          adoptRemote(result.remote.tournament);
-        }
+        rev.current = result.remote.rev;
+        synced.current = goal;
+        adoptRemote(result.remote.tournament);
         setState('ueberholt');
         setTimeout(() => setState((s) => (s === 'ueberholt' ? 'ok' : s)), 6000);
         return;
@@ -120,11 +168,9 @@ export function useCloud({ tournament, contentRevision, adoptRemote, enabled }: 
   // Bei Netzproblemen mit Abstand erneut versuchen.
   useEffect(() => {
     if (state !== 'netz') return;
-    const timer = setTimeout(() => {
-      synced.current = synced.current - 0; // keine Änderung – nur erneut anstoßen
-      setState('ok');
-    }, 5000);
+    const timer = setTimeout(reattempt, 5000);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   // Regelmäßig nach fremden Änderungen sehen.
@@ -132,7 +178,7 @@ export function useCloud({ tournament, contentRevision, adoptRemote, enabled }: 
     const cfg = config.current;
     if (!cfg || state === 'aus' || state === 'verbinde') return;
     const timer = setInterval(() => {
-      if (busy.current) return;
+      if (busy.current || !connected.current) return;
       // Solange eigene Änderungen ausstehen, nichts übernehmen –
       // der Versionsvergleich beim Hochladen klärt das sauberer.
       if (contentRevision !== synced.current) return;
@@ -146,7 +192,7 @@ export function useCloud({ tournament, contentRevision, adoptRemote, enabled }: 
   }, [state, contentRevision, adoptRemote]);
 
   const retry = (): void => {
-    if (state === 'netz') setState('ok');
+    if (state === 'netz') reattempt();
   };
 
   return { state, retry };
