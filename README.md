@@ -89,11 +89,12 @@ stillen Datenverlusts.
    create policy "alle anlegen"   on public.turnier for insert with check (true);
    ```
 
-3. Unter **Settings → API** die *Project URL* und den *anon public*-Schlüssel
-   kopieren und in `public/sync-config.json` eintragen:
+3. Unter **Settings → API** die *Project URL* und den öffentlichen Schlüssel
+   (*publishable key* `sb_publishable_...`, bei älteren Projekten *anon
+   public* `eyJ...`) kopieren und in `public/sync-config.json` eintragen:
 
    ```json
-   { "url": "https://DEINPROJEKT.supabase.co", "anonKey": "eyJ..." }
+   { "url": "https://DEINPROJEKT.supabase.co", "anonKey": "sb_publishable_..." }
    ```
 
 4. Einchecken und pushen – GitHub Pages baut die Seite automatisch neu.
