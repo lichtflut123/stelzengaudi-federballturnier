@@ -1,0 +1,817 @@
+/* ===================================================================
+   Stelzengaudi Federballturnier
+   Farben zuerst hell definieren, danach für den Dunkelmodus überschreiben.
+   =================================================================== */
+:root {
+  --bg: #f2f5fa;
+  --panel: #ffffff;
+  --panel-alt: #eef2f8;
+  --border: #c2cadb;
+  --border-strong: #7c88a0;
+  --line: #9aa6bd;
+  --text: #131c29;
+  --muted: #4d5a70;
+  --accent: #1558c4;
+  --accent-text: #ffffff;
+  --accent-soft: #dfeaff;
+  --gold: #8a6200;
+  --gold-soft: #fdf0d0;
+  --danger: #a81f2f;
+  --danger-soft: #fbe6e8;
+  --ok: #0f6b41;
+  --ok-soft: #dff2e8;
+  --warn: #7a4e00;
+  --warn-soft: #fdf0d8;
+  --deep: #10204a;
+  --deep-2: #1b3168;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.08), 0 8px 24px rgba(16, 24, 40, 0.07);
+  --radius: 14px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0c1120;
+    --panel: #151d30;
+    --panel-alt: #1c2539;
+    --border: #33405a;
+    --line: #4a5878;
+    --text: #eaeff8;
+    --muted: #a7b4ca;
+    --accent: #6ea8ff;
+    --accent-text: #071021;
+    --accent-soft: #1c2c4c;
+    --gold: #f2c75c;
+    --gold-soft: #3a2c0e;
+    --danger: #ff909a;
+    --danger-soft: #3c1f24;
+    --ok: #6fd6a4;
+    --ok-soft: #133023;
+    --warn: #f4c977;
+    --warn-soft: #382a10;
+    --deep: #0b1531;
+    --deep-2: #142450;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html { scroll-padding-top: 8rem; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, 'Segoe UI', -apple-system, 'Helvetica Neue', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1, h2, h3 { margin: 0 0 0.4em; line-height: 1.25; }
+h1 { font-size: 1.3rem; }
+h2 { font-size: 1.15rem; }
+h3 { font-size: 1rem; }
+p { margin: 0 0 0.8em; }
+
+/* ---------- Grundgerüst ---------- */
+.app { max-width: 1200px; margin: 0 auto; padding: 0 12px 80px; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg);
+  padding: 10px 0 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar__row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.topbar__title { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 auto; }
+.topbar__title h1 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: clamp(1.02rem, 4.4vw, 1.3rem);
+}
+.topbar__actions { display: flex; gap: 6px; flex: 0 0 auto; }
+
+@media (max-width: 460px) {
+  /* Auf schmalen Geräten bekommt der Turniername eine eigene Zeile,
+     sonst bleibt vom Namen nur ein Stummel übrig. */
+  .topbar__title { flex: 1 1 100%; }
+  .topbar__actions { flex: 1 1 100%; }
+  .topbar__actions .btn { flex: 1 1 auto; }
+}
+.logo { font-size: 1.4rem; line-height: 1; }
+
+.progress { margin-top: 8px; }
+.progress__bar { height: 8px; border-radius: 999px; background: var(--panel-alt); overflow: hidden; border: 1px solid var(--border); }
+.progress__fill { height: 100%; background: var(--accent); transition: width 0.25s ease; }
+.progress__label { font-size: 0.85rem; color: var(--muted); margin-top: 3px; }
+
+.tabs { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.tab {
+  flex: 1 1 auto;
+  border: 1px solid var(--border-strong);
+  background: var(--panel);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 9px 12px;
+  min-height: 44px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tab[aria-current='page'] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.tab:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin: 14px 0;
+  box-shadow: var(--shadow);
+}
+
+.grid { display: grid; gap: 12px; }
+@media (min-width: 700px) { .grid--2 { grid-template-columns: 1fr 1fr; } }
+
+.rule { border: 0; border-top: 1px solid var(--border); margin: 18px 0; }
+
+/* ---------- Formulare ---------- */
+label { display: block; font-size: 0.88rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+
+input[type='text'], input[type='number'], select, textarea {
+  width: 100%;
+  padding: 10px 11px;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--panel-alt);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+input:disabled, select:disabled, textarea:disabled { opacity: 0.6; }
+textarea { min-height: 110px; }
+
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 0.98rem;
+  font-weight: 500;
+  color: var(--text);
+  margin: 0;
+  cursor: pointer;
+}
+.checkbox input { width: 24px; height: 24px; accent-color: var(--accent); flex: 0 0 auto; }
+
+.hint { color: var(--muted); font-size: 0.85rem; margin: 4px 0 0; }
+
+.btn {
+  border: 1px solid var(--border-strong);
+  background: var(--panel-alt);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-height: 44px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn--primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.btn--danger { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+.btn--small { padding: 7px 12px; font-size: 0.9rem; }
+.btn--big { font-size: 1.05rem; padding: 14px 20px; min-height: 52px; }
+.btn--icon { padding: 0; width: 44px; min-width: 44px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+
+.add-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.add-form__name { flex: 1 1 200px; }
+.add-form__champ { flex: 0 0 auto; }
+
+/* ---------- Hinweise ---------- */
+.note {
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  margin: 10px 0;
+  border: 1px solid transparent;
+}
+.note--error { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+.note--warn { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+.note--ok { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.note--info { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+.note ul { margin: 4px 0 0; padding-left: 18px; }
+
+.muted { color: var(--muted); font-size: 0.88rem; }
+.empty { text-align: center; color: var(--muted); padding: 40px 12px; }
+
+/* ---------- Teilnehmerliste ---------- */
+.player-list { list-style: none; margin: 0; padding: 0; }
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+.player-row:last-child { border-bottom: none; }
+.player-row__index { width: 26px; flex: 0 0 auto; color: var(--muted); font-size: 0.9rem; }
+.player-row__name { flex: 1 1 auto; min-width: 0; }
+.player-row__champ { flex: 0 0 auto; margin-left: 4px; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--panel-alt);
+  color: var(--muted);
+  border: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+.chip--court { background: var(--accent-soft); color: var(--text); border-color: var(--accent); }
+.chip--live { background: var(--gold-soft); color: var(--gold); border-color: var(--gold); }
+
+/* ---------- Jetzt dran ---------- */
+.now { border-left: 5px solid var(--accent); }
+.now--done { border-left-color: var(--gold); }
+.now__list { list-style: none; margin: 0; padding: 0; }
+.now__list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.now__list li:last-child { border-bottom: none; }
+.now__court {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+.now__players { flex: 1 1 auto; font-size: 1.05rem; font-weight: 600; overflow-wrap: anywhere; }
+.now__round { color: var(--muted); font-size: 0.85rem; }
+.now__next { margin: 10px 0 0; }
+
+.podium { display: grid; gap: 8px; }
+.podium__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  font-size: 1.1rem;
+}
+.podium__medal { font-size: 1.7rem; }
+.podium__place { font-weight: 700; }
+.podium__name { overflow-wrap: anywhere; }
+
+/* ---------- Spielkarten ---------- */
+.round-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 22px 0 8px;
+}
+.round-head h3 { margin: 0; }
+
+.match {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left-width: 5px;
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+}
+.match--done { border-left-color: var(--ok); }
+.match--open { border-left-color: var(--accent); }
+.match--pending { border-left-color: var(--border-strong); }
+.match--pending .match__name.is-placeholder { font-style: italic; }
+
+.match__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.match__side { display: flex; align-items: center; gap: 10px; padding: 4px 0; font-size: 1.05rem; }
+.match__name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.match__name.is-winner { font-weight: 700; }
+.match__name.is-placeholder { color: var(--muted); font-style: italic; }
+.match__score { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.15rem; }
+.match__vs { font-size: 0.8rem; color: var(--muted); margin: 2px 0; }
+.match__result { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.match__actions { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.sets { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+.sets__head {
+  display: grid;
+  grid-template-columns: 70px 1fr 18px 1fr;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+.sets__head span:first-child { grid-column: 2; text-align: center; }
+.sets__head span:last-child { grid-column: 4; text-align: center; }
+.set-row { display: grid; grid-template-columns: 70px 1fr 18px 1fr; gap: 6px; align-items: center; margin-top: 6px; }
+.set-row__label { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+.set-row input { text-align: center; font-variant-numeric: tabular-nums; font-size: 1.15rem; }
+.set-row__colon { text-align: center; color: var(--muted); }
+
+/* ---------- Turnierbaum ---------- */
+.tree { margin: 16px 0; }
+.tree__title { font-size: 1.05rem; margin-bottom: 8px; }
+
+.bracket-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: linear-gradient(160deg, var(--deep) 0%, var(--deep-2) 100%);
+  border-radius: var(--radius);
+  padding: 14px 12px 18px;
+  border: 1px solid var(--border-strong);
+  /* Angeschnittene Kanten zeigen, dass seitlich mehr kommt. */
+  mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+}
+.bracket-scroll:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.bracket {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  width: max-content;
+  min-width: 100%;
+  justify-content: center;
+  margin-inline: auto;
+  --line: #7d9ce0;
+  --accent-green: #cdf06a;
+  --frame-green: rgba(205, 240, 106, 0.45);
+}
+.bracket__side { display: flex; gap: 12px; }
+.bracket__col { display: flex; flex-direction: column; width: 170px; flex: 0 0 auto; }
+
+/* Feste Kopfhöhe: sonst verschiebt ein umbrechender Titel die ganze Spalte. */
+.bracket__col-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 800;
+  color: var(--accent-green);
+  text-align: center;
+  height: 2.6em;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 6px;
+}
+.bracket__col-title--final { font-size: 1.25rem; letter-spacing: 0.05em; }
+
+.bracket__col-body { flex: 1; display: flex; flex-direction: column; }
+.bracket__cell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-height: 76px;
+  padding: 7px 0;
+}
+
+/* Waagerechter Anschluss zur nächsten Spalte … */
+.bracket__col--links .bracket__cell::after,
+.bracket__col--rechts .bracket__cell::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  border-top: 2px solid var(--line);
+}
+.bracket__col--links .bracket__cell::after { right: -12px; }
+.bracket__col--rechts .bracket__cell::after { left: -12px; }
+
+/* … außer aus der innersten Spalte: dort übernimmt die Finalklammer. */
+.bracket__col-body.is-inner .bracket__cell::after { content: none; }
+
+/* Senkrechte Klammer zwischen zwei Partnern */
+.bracket__col--links .bracket__cell:nth-child(odd):not(:only-child)::before,
+.bracket__col--rechts .bracket__cell:nth-child(odd):not(:only-child)::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  height: 100%;
+  border-right: 2px solid var(--line);
+}
+.bracket__col--links .bracket__cell:nth-child(odd):not(:only-child)::before { right: -12px; }
+.bracket__col--rechts .bracket__cell:nth-child(odd):not(:only-child)::before { left: -12px; }
+
+/* Die Vorrunde speist einzelne Plätze, keine Paare – dort keine Klammern. */
+.bracket__col--playin .bracket__cell::before,
+.bracket__col--playin .bracket__cell::after { content: none; }
+.bracket__col--playin .bracket__match { border-style: dashed; }
+
+.bracket__match {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 7px 9px;
+  width: 100%;
+  color: #eef3ff;
+  font-size: 0.9rem;
+}
+.bracket__match.is-done { border-color: var(--frame-green); }
+.bracket__row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+.bracket__row.is-winner { font-weight: 800; color: var(--accent-green); }
+.bracket__row.is-placeholder { color: #a9b9db; font-style: italic; }
+.bracket__name { overflow-wrap: anywhere; }
+.bracket__sets { font-variant-numeric: tabular-nums; font-weight: 700; }
+.bracket__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: #a9b9db;
+  margin-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  padding-top: 3px;
+}
+
+/* Mitte: Finale sitzt auf der Achse zwischen den Halbfinals. */
+.bracket__center {
+  display: flex;
+  flex-direction: column;
+  width: 240px;
+  flex: 0 0 auto;
+  position: relative;
+}
+.bracket__center-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 10px;
+  position: relative;
+}
+/* Die beiden Zuläufe aus den Halbfinals */
+.bracket__center-body::before,
+.bracket__center-body::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  border-top: 2px solid var(--line);
+}
+.bracket__center-body::before { left: -12px; }
+.bracket__center-body::after { right: -12px; }
+
+.bracket__match--final {
+  background: rgba(255, 255, 255, 0.14);
+  border: 2px solid var(--accent-green);
+  box-shadow: 0 0 0 4px rgba(205, 240, 106, 0.12);
+  font-size: 1rem;
+  padding: 12px 14px;
+}
+.bracket__winner {
+  background: var(--accent-green);
+  color: #17240a;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 7px 14px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.bracket__third { margin-top: 14px; }
+.bracket__third .bracket__col-title { height: auto; color: #a9b9db; padding-bottom: 4px; }
+
+/* ---------- Sonstiges ---------- */
+.footer {
+  margin-top: 28px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Drucken ---------- */
+@media print {
+  :root {
+    --bg: #ffffff;
+    --panel: #ffffff;
+    --panel-alt: #ffffff;
+    --border: #999999;
+    --border-strong: #666666;
+    --line: #333333;
+    --text: #000000;
+    --muted: #333333;
+    --accent: #000000;
+    --accent-soft: #ffffff;
+    --gold: #000000;
+    --gold-soft: #ffffff;
+    --danger: #000000;
+    --danger-soft: #ffffff;
+    --ok: #000000;
+    --ok-soft: #ffffff;
+    --warn: #000000;
+    --warn-soft: #ffffff;
+    --deep: #ffffff;
+    --deep-2: #ffffff;
+    --shadow: none;
+    color-scheme: light;
+  }
+  @page { size: A4 landscape; margin: 12mm; }
+  body { background: #fff; color: #000; }
+  .no-print, .tabs, .match__actions, .topbar__actions, .filters, .btn { display: none !important; }
+  .topbar { position: static; border-bottom: 2px solid #000; }
+  .app { padding: 0; max-width: none; }
+  .card, .match { box-shadow: none; break-inside: avoid; page-break-inside: avoid; padding: 8px; margin-bottom: 6px; }
+  .match { border: 1px solid #999; border-left-width: 1px; }
+  .round-head { break-after: avoid; page-break-after: avoid; }
+  /* Platz zum Eintragen von Hand */
+  .match--open::after, .match--pending::after {
+    content: 'Ergebnis: _______ : _______';
+    display: block;
+    margin-top: 8px;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+  }
+  /* Der Baum muss vollständig aufs Papier, nicht nur der sichtbare Ausschnitt. */
+  .bracket-scroll {
+    overflow: visible !important;
+    background: #fff;
+    border-color: #000;
+    mask-image: none;
+    padding: 6px;
+  }
+  .bracket { width: auto; --line: #333; --accent-green: #000; --frame-green: #666; }
+  .bracket__col { width: 118px; }
+  .bracket__center { width: 150px; }
+  .bracket__match { color: #000; background: #fff; border-color: #666; font-size: 0.7rem; padding: 4px 5px; }
+  .bracket__match--final { border: 2px solid #000; box-shadow: none; font-size: 0.78rem; }
+  .bracket__row.is-winner { color: #000; }
+  .bracket__row.is-placeholder { color: #444; }
+  .bracket__col-title, .bracket__third .bracket__col-title { color: #000; }
+  .bracket__foot { color: #444; border-top-color: #ccc; }
+  .bracket__winner { background: #fff; color: #000; border: 2px solid #000; }
+  .bracket__cell { min-height: 58px; padding: 4px 0; }
+}
+
+/* ---------- Startbild ---------- */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--bg);
+  color: var(--text);
+  animation: splash-in 0.45s ease;
+}
+.splash--out {
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+.splash__logo {
+  width: min(62vw, 300px);
+  height: auto;
+  animation: splash-draw 0.9s ease;
+}
+.splash__title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.splash__subtitle {
+  color: var(--muted);
+  font-size: 1rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+@keyframes splash-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes splash-draw {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash, .splash__logo { animation: none; }
+  .splash--out { transition: none; }
+}
+@media print {
+  .splash,
+  .referee {
+    display: none !important;
+  }
+}
+
+.topbar__logo {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  color: var(--text);
+}
+
+/* ---------- Schiri-Modus ---------- */
+.referee {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  padding: 12px;
+  gap: 10px;
+}
+.referee__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.referee__sets {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.referee__courts {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  min-height: 0;
+}
+.referee__pad {
+  border: 2px solid var(--border-strong);
+  border-radius: 18px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+.referee__pad:active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.referee__name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.referee__score {
+  font-size: clamp(3.5rem, 18vw, 7rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.referee__plus {
+  color: var(--muted);
+  font-weight: 700;
+}
+.referee__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.referee__hint {
+  text-align: center;
+  margin: 0;
+}
+@media (orientation: portrait) and (max-width: 520px) {
+  .referee__courts { grid-template-columns: 1fr; }
+}
+
+/* ---------- Einlaufmusik ---------- */
+.player-row__song {
+  margin-top: 6px;
+  font-size: 0.92rem;
+}
+.now__songs {
+  display: block;
+  flex-basis: 100%;
+  margin-top: 2px;
+}
+.now__song {
+  display: block;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+.now__song strong {
+  color: var(--text);
+}
+
+/* ---------- Anleitung ---------- */
+.guide__toggle {
+  width: 100%;
+  justify-content: space-between;
+  font-size: 1.02rem;
+}
+.guide__body { margin-top: 10px; }
+.guide__steps {
+  margin: 6px 0 14px;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+}
+.guide__body code {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1px 5px;
+  font-size: 0.88em;
+}
+
+.referee__pad:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* „Jetzt dran" als Sprungliste */
+.now__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 6px 4px;
+  border-radius: 10px;
+  cursor: pointer;
+  min-height: 44px;
+}
+.now__row:hover {
+  background: var(--accent-soft);
+}
+.now__go {
+  margin-left: auto;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Angesprungene Karte nicht unter der klebenden Kopfzeile verstecken */
+.match {
+  scroll-margin-top: 140px;
+}

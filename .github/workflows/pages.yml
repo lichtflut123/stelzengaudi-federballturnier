@@ -1,0 +1,59 @@
+# Veröffentlicht die App auf GitHub Pages: eine normale Web-Adresse,
+# die jeder ohne Konto öffnen kann.
+#
+# Solange Pages im Repo noch nicht eingeschaltet ist
+# (Settings -> Pages -> Source: "GitHub Actions"), wird die Veröffentlichung
+# übersprungen - Tests und Build laufen trotzdem und bleiben das CI-Signal.
+name: Seite veröffentlichen
+
+on:
+  push:
+    branches: [main, claude/new-session-g6qmfw]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    outputs:
+      pages_bereit: ${{ steps.pages.outcome }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - uses: actions/configure-pages@v5
+        id: pages
+        continue-on-error: true
+        with:
+          enablement: true
+      - name: Hinweis bei fehlendem Pages-Schalter
+        if: steps.pages.outcome != 'success'
+        run: echo "::notice::GitHub Pages ist noch nicht aktiviert (Settings -> Pages -> Source 'GitHub Actions'). Die Veröffentlichung wird übersprungen."
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.pages.outcome == 'success'
+        with:
+          path: dist
+
+  deploy:
+    needs: pruefen
+    if: needs.pruefen.outputs.pages_bereit == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,13 @@
+node_modules
+dist
+.DS_Store
+*.local
+coverage
+
+# temporäre Prüfskripte und Build-Zwischenstände
+*.tsbuildinfo
+tmp_*
+# versehentlich emittierte Kompilate neben den Quellen
+src/**/*.js
+.gen2.html
+dist-live
