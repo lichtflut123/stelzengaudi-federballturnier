@@ -182,9 +182,10 @@ export function RefereeView({ match, aName, bName, rules, onSetDone, onFinished,
     onSetDone(done.slice(0, -1));
     setA(last.a);
     setB(last.b);
-    // Die echte Punktreihenfolge ist nicht mehr bekannt – für „Punkt zurück"
-    // reicht eine Folge, die zuerst die Punkte des Satzverlierers abbaut.
-    const [first, second]: Array<'a' | 'b'> = last.a >= last.b ? ['a', 'b'] : ['b', 'a'];
+    // Die echte Punktreihenfolge ist nicht mehr bekannt. „Punkt zurück" baut
+    // hinten ab und soll zuerst den satzbeendenden Punkt (des Satzgewinners)
+    // nehmen – also stehen die Punkte des Gewinners am Ende der Folge.
+    const [first, second]: Array<'a' | 'b'> = last.a >= last.b ? ['b', 'a'] : ['a', 'b'];
     setHistory([
       ...Array.from({ length: first === 'a' ? last.a : last.b }, () => first),
       ...Array.from({ length: second === 'a' ? last.a : last.b }, () => second),
