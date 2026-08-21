@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#10204a"/>
+  <g fill="none" stroke="#cdf06a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Knochen -->
+    <path d="M33 12 C32 10 34 8 36 8 C37 6 40 6 41 8 C43 7 45 9 44 11 C46 12 45 15 43 16 L38 26 L33 24 Z"/>
+    <!-- Stelze -->
+    <path d="M33 24 C24 26 17 32 15 40 C13 48 18 55 26 57 C35 59 44 56 47 49 C50 42 48 33 43 28 C41 26 39 25 38 26"/>
+    <path d="M18 40 C24 38 33 37 41 40" stroke-width="1.6"/>
+    <path d="M19 48 C26 46 36 46 44 49" stroke-width="1.5"/>
+  </g>
+</svg>

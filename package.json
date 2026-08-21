@@ -1,0 +1,33 @@
+{
+  "name": "stelzengaudi-federballturnier",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "build:artifact": "npm run build:live && node scripts/build-artifact.mjs",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "node e2e/smoke.mjs",
+    "build:live": "tsc -b && vite build --mode live",
+    "e2e:live": "node e2e/live.mjs",
+    "e2e:cloud": "node e2e/cloud.mjs"
+  },
+  "dependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^5.0.0",
+    "playwright": "^1.62.1",
+    "typescript": "^5.8.3",
+    "vite": "^7.1.2",
+    "vite-plugin-singlefile": "^2.3.3",
+    "vitest": "^3.2.4"
+  }
+}
