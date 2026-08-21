@@ -47,9 +47,13 @@ jobs:
         with:
           path: dist
 
+  # Veröffentlicht wird nur von main: die automatisch angelegte
+  # github-pages-Umgebung lässt andere Zweige gar nicht zu, und die
+  # Live-Adresse soll ohnehin den gemergten Stand zeigen. Auf
+  # Arbeitszweigen bleibt "pruefen" (Tests und Build) das CI-Signal.
   deploy:
     needs: pruefen
-    if: needs.pruefen.outputs.pages_bereit == 'success'
+    if: needs.pruefen.outputs.pages_bereit == 'success' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
