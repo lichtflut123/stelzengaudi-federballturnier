@@ -784,9 +784,33 @@ if ($WindowsGrundeinstellungen) {
 }
 
 # ---------------------------------------------------------------
-# Schritt 9: Abschlussreport
+# Schritt 9: Infodateien sichern + Abschlussreport
 # ---------------------------------------------------------------
-Write-Host "--- Schritt 9: Abschlussreport ---"
+Write-Host "--- Schritt 9: Infodateien sichern + Abschlussreport ---"
+# Unkritische Infodateien aus dem Migrationspaket nach %LOCALAPPDATA%\pc2-setup
+# kopieren (alle maskiert bzw. secret-frei): Sie werden auch NACH dem Loeschen
+# des Pakets noch gebraucht - repo-liste.txt fuers Klonen und fuer
+# ProjekteBackupQuellen, graphify-info.txt fuer die graphify-Nachinstallation,
+# programme-komplett.txt fuer die GPU-Treiberversion, manifest.json und
+# import-fehlgeschlagen.txt fuer die Verifikation (PLAN.md, Abschnitt 8).
+# Ohne diese Kopien wuerde 'Migrationspaket loeschen' die Infos vernichten.
+if ($TransferPfad -and (Test-Path $TransferPfad)) {
+    $infoDateien = @("repo-liste.txt", "graphify-info.txt", "programme-komplett.txt",
+                     "nicht-automatisch.txt", "oem-hinweise.txt", "import-fehlgeschlagen.txt",
+                     "manifest.json", "vault-auswahl.txt", "projekt-konfig-fundliste.txt",
+                     "export-warnungen.txt")
+    $kopiert = 0
+    foreach ($info in $infoDateien) {
+        $infoQuelle = Join-Path $TransferPfad $info
+        if (Test-Path $infoQuelle) {
+            Copy-Item $infoQuelle (Join-Path $LogOrdner $info) -Force -ErrorAction SilentlyContinue
+            $kopiert++
+        }
+    }
+    if ($kopiert -gt 0) {
+        Melde-Hinweis ("{0} Infodatei(en) des Migrationspakets (repo-liste.txt, graphify-info.txt, programme-komplett.txt, manifest.json usw.) liegen als Kopie unter {1} - das Migrationspaket kann daher nach der Verifikation gefahrlos komplett geloescht werden." -f $kopiert, $LogOrdner)
+    }
+}
 $report = @()
 $report += ("=== setup-pc2 Report vom " + (Get-Date).ToString("s") + " ===")
 $report += ""
@@ -807,14 +831,19 @@ $report += "    Relay/globale Erkennung eingeschaltet LASSEN (Laptop synct dann 
 $report += "    WICHTIG: Nur koppeln, wenn $VaultPfad befuellt ist (siehe etwaige Fehler oben)."
 $report += "    Laedt die Seite auf einem PC nicht: Syncthing dort einmal ueber das Startmenue starten"
 $report += "    (oder ab- und wieder anmelden), dann neu laden."
-$report += " 5. nicht-automatisch.txt und ggf. import-fehlgeschlagen.txt im Migrationspaket durchsehen."
-$report += " 6. Manuelle Restliste im PLAN.md abarbeiten (Adobe CC 2-Geraete-Limit, Cinema 4D/Maxon,"
+$report += " 5. Obsidian auf PC 2 oeffnen -> 'Anderen Vault oeffnen' -> C:\SecondBrain als Vault oeffnen"
+$report += "    (PLAN.md, Block 2, Schritt 11; falls Obsidian fehlt: winget install --id Obsidian.Obsidian -e)."
+$report += " 6. nicht-automatisch.txt und ggf. import-fehlgeschlagen.txt durchsehen."
+$report += " 7. Manuelle Restliste im PLAN.md abarbeiten (Adobe CC 2-Geraete-Limit, Cinema 4D/Maxon,"
 $report += "    ArchiCAD, Topaz, DaVinci, D5 Render 3-Geraete-Check + GPU-Check, Postshot,"
 $report += "    FreeFileSync Business, Bitwarden, graphify laut graphify-info.txt, Treiber, Logins)."
-$report += " 7. Einmal 'winget upgrade --all' ausfuehren."
-$report += " 8. WICHTIG: restliches Migrationspaket loeschen - am einfachsten den Ordner"
+$report += " 8. Einmal 'winget upgrade --all' ausfuehren."
+$report += " 9. WICHTIG (als LETZTER Schritt, nach Restliste und Verifikation): restliches"
+$report += "    Migrationspaket loeschen - am einfachsten den Ordner"
 $report += ("    '" + $TransferUnterordner + "' auf der NAS-Freigabe bzw. dem USB-Stick im Explorer loeschen.")
-$report += "    (mcp-servers.json wurde - falls vorhanden - nach dem Merge bereits automatisch geloescht.)"
+$report += "    (mcp-servers.json wurde - falls vorhanden - nach dem Merge bereits automatisch geloescht."
+$report += ("     Die Infodateien repo-liste.txt, graphify-info.txt, programme-komplett.txt, manifest.json usw.")
+$report += ("     liegen als Kopie unter " + $LogOrdner + " und bleiben nach dem Loeschen erhalten.)")
 if ($TransferPfad -and ((Split-Path $TransferPfad -Leaf) -eq $TransferUnterordner)) {
     # Loeschbefehl nur ausgeben, wenn der Pfad sicher auf den Unterordner zeigt
     # (nie auf die Freigabe-Wurzel).
